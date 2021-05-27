@@ -70,8 +70,6 @@ def main():
         elif event == 'New':
             window.close()
             namer()
-
-            initilizer()
         elif event == "Saved":
             window.close()
 
@@ -79,19 +77,31 @@ def main():
     window.close()
 
 def namer():
+    badchar = ('\'\";:.,/?><\|{}()`~!@#$%^&*=');
+
     layout = [
         [sg.Text('Enter new script name: ', size=(17, 1), pad=(0, 0)),
          sg.Input(size=(20, 1), pad=(0, 0), key='-name-')],
-        [sg.Button('Next', pad=(0, (10, 0)))],
+        [sg.Text('', size=(25, 1), key='-errormsg-')],
+        [sg.Button('Next')],
     ]
-    window = sg.Window('Name', layout, text_justification='c', element_justification='c', size=(375, 80))
+    window = sg.Window('Name Your Script', layout, text_justification='c', element_justification='c', size=(375, 90))
 
     while True:
         ev, val = window.read()
         if ev == sg.WINDOW_CLOSED:
             break
         if ev == 'Next':
-            fname = window['-name-']
+            fname = val['-name-']
+            if fname.isalnum():
+                window.close()
+                initilizer()
+            else:
+                window['-name-'].update('')
+                window['-errormsg-'].update('Cannot contain special characters')
+
+
+            fname = val['-name-']
             print(fname)
 
 def on_press(key):
