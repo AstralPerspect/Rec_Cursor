@@ -1,12 +1,13 @@
 from pynput.mouse import Listener as MouseListener
-#from pynput.keyboard import Listener as KeyboardListener
-from pynput import keyboard
+from pynput.keyboard import Listener as KeyboardListener
+#from pynput import keyboard
 import PySimpleGUI as sg
 
 
-global recording
+global recording, fname
 recording = False
 keys = []
+log = ""
 
 def recordN():
 
@@ -34,18 +35,27 @@ def initilizer():
     window = sg.Window('no title', layout, grab_anywhere=True, resizable=False, no_titlebar=True, size=(250, 200))
 
     # Collect all event until released
-
     while True:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
         elif event == '-start-':
             print('start')
+            keyboard_listener = KeyboardListener(on_press=on_press)
+            mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
+            keyboard_listener.start()
+            mouse_listener.start()
+            keyboard_listener.join()
+            mouse_listener.join()
+
+            """""
             with keyboard.Listener(on_press=on_press) as kl:
-                #kl.start()
+                
+                kl.start()
+                print(kl, '...stuff')
                 kl.join()
                 #if kl.char('b') == 'b':
-                print(kl, '...stuff')
+            """""
 
     print('out of while')
     # Start the threads and join them so the script doesn't end early
@@ -76,9 +86,16 @@ def main():
             print('saved')
     window.close()
 
-def namer():
-    badchar = ('\'\";:.,/?><\|{}()`~!@#$%^&*=');
+def log_file(fname):
+    global log
+    #open/create file in write mode
+    with open(f'{fname}.txt', 'w') as f:
+        print(log, file=f)
+    print(f'[+] Saved {fname}.txt')
 
+def namer():
+    #badchar = ('\'\";:.,/?><\|{}()`~!@#$%^&*=');
+    global fname
     layout = [
         [sg.Text('Enter new script name: ', size=(17, 1), pad=(0, 0)),
          sg.Input(size=(20, 1), pad=(0, 0), key='-name-')],
@@ -86,7 +103,10 @@ def namer():
         [sg.Button('Next')],
     ]
     window = sg.Window('Name Your Script', layout, text_justification='c', element_justification='c', size=(375, 90))
-
+    if 8 > 4+5:
+        print('8 is larger')
+    elif 8 > 3 - 12 and 9 > 8-2:
+        print('yeet')
     while True:
         ev, val = window.read()
         if ev == sg.WINDOW_CLOSED:
@@ -101,38 +121,50 @@ def namer():
                 window['-errormsg-'].update('Cannot contain special characters')
 
 
-            fname = val['-name-']
-            print(fname)
+
 
 def on_press(key):
-    global recording
+    global recording, log
+    print(log)
     print("Key pressed: {0}".format(key))
-    if key == keyboard.Key.esc:
+    if key == KeyboardListener.Key.esc:
         print('Escape was pressed... EXIT')
         return False
     try:
         k = key.char #single char key
     except:
-        k = key.name #other keys
-    if k == '`':
-        recording = True
-        print('Record starting')
-    if recording == True:
-        keys.append(key)
-        wfile(keys)
+        k = str(key)
 
-def wfile(keys, name): #file writter
-    with open((name + '.txt'), 'w') as f:
-        print('placeholder')
+    f= open((fname + '.txt'), 'a')
+    f.write('[s] {}'.format(str(key)))
+    f.close()
+
+
 def on_move(x, y):
     print("Mouse moved to ({0}, {1})".format(x, y))
     return x, y
 
 def on_click(x, y, button, pressed):
+    global x1, y1
+    drag = False
     if pressed:
         print('Mouse clicked at ({0}, {1}) with {2}'.format(x, y, button))
+        x1 = x
+        y1 = y
     else:
         print('Mouse released at ({0}, {1}) with {2}'.format(x, y, button))
+        if x > x1 + 10 or x < x1 - 10 or y > y1 + 10 or y < y1 - 10:
+            drag = True
+            f = open((fname + '.txt'), 'a')
+            f.write('[cd] {} {} {} {} {}\n'.format(str(x1), str(y1), str(x), str(y), str(button)))
+            f.close()
+            print('mouse dragged')
+        else:
+            f= open((fname + '.txt'), 'a')
+            f.write('[c] {} {} {}\n'.format(str(x), str(y), str(button)))
+            f.close()
+            print('no drag')
+
     return x, y, button
 
 def on_scroll(x, y, dx, dy):
@@ -143,5 +175,6 @@ def on_scroll(x, y, dx, dy):
 
 
 if __name__ == '__main__':
+
     main()
 
