@@ -41,12 +41,28 @@ def initilizer():
             break
         elif event == '-start-':
             print('start')
-            keyboard_listener = KeyboardListener(on_press=on_press)
-            mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
-            keyboard_listener.start()
-            mouse_listener.start()
-            keyboard_listener.join()
-            mouse_listener.join()
+            with KeyboardListener(on_press=on_press_start) as keyboard_listener:
+                keyboard_listener.join()
+            with KeyboardListener(on_press=on_press) as keyboard_listener:
+
+                print('running')
+
+                with MouseListener(on_click=on_click, on_scroll=on_scroll) as mouse_listener:
+                    if not keyboard_listener.running:
+                        print('not running')
+                        break
+                    mouse_listener.join()
+
+            #keyboard_listener = KeyboardListener(on_press=on_press)
+            #mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
+            #print(mouse_listener, ' 1')
+            #keyboard_listener.start()
+            #mouse_listener.start()
+            #print(mouse_listener, ' 2')
+            #keyboard_listener.join()
+            #mouse_listener.join()
+                print('running....')
+            print('listener stopped')
 
             """""
             with keyboard.Listener(on_press=on_press) as kl:
@@ -63,6 +79,15 @@ def initilizer():
     if exitCase == 5:
         window.close()
     print('out')
+
+def on_press_start(key):
+    try:
+        k = key.char  # single char key
+    except:
+        k = str(key)
+        if k == 'Key.esc':
+            print('Escape was pressed... EXIT')
+            return False
 
 def main():
     msg = 'Would you like to \ncreate a new Cursor Bot \nor run a saved bot'
@@ -120,25 +145,42 @@ def namer():
                 window['-name-'].update('')
                 window['-errormsg-'].update('Cannot contain special characters')
 
-
-
-
 def on_press(key):
     global recording, log
     print(log)
     print("Key pressed: {0}".format(key))
-    if key == KeyboardListener.Key.esc:
-        print('Escape was pressed... EXIT')
-        return False
+
     try:
         k = key.char #single char key
     except:
         k = str(key)
+        if k == 'Key.esc':
+            print('Escape was pressed... EXIT')
+            #on_click(-999999, 0, 0, 0)
+            return False
+    if 'Key' in k:
+        f = open((fname + '.txt'), 'a')
+        f.write('\n[k] {}'.format(k))
+        f.close()
+    else:
+        #gets last line in file
+        try:
+            with open((fname + '.txt'), 'r') as file:
+                for last_line in file:
+                    pass
+        except:
+            last_line = ''
+            pass
 
-    f= open((fname + '.txt'), 'a')
-    f.write('[s] {}'.format(str(key)))
-    f.close()
-
+        #if [s] indicating string exists the concat else start new line
+        if '[s]' in last_line:
+            f = open((fname + '.txt'), 'a')
+            f.write('{}'.format(k))
+            f.close()
+        else:
+            f = open((fname + '.txt'), 'a')
+            f.write('\n[s] {}'.format(k))
+            f.close()
 
 def on_move(x, y):
     print("Mouse moved to ({0}, {1})".format(x, y))
@@ -147,6 +189,9 @@ def on_move(x, y):
 def on_click(x, y, button, pressed):
     global x1, y1
     drag = False
+    if x == -999999:
+        print('returning false')
+        return False
     if pressed:
         print('Mouse clicked at ({0}, {1}) with {2}'.format(x, y, button))
         x1 = x
@@ -156,12 +201,12 @@ def on_click(x, y, button, pressed):
         if x > x1 + 10 or x < x1 - 10 or y > y1 + 10 or y < y1 - 10:
             drag = True
             f = open((fname + '.txt'), 'a')
-            f.write('[cd] {} {} {} {} {}\n'.format(str(x1), str(y1), str(x), str(y), str(button)))
+            f.write('\n[cd] {} {} {} {} {}'.format(str(x1), str(y1), str(x), str(y), str(button)))
             f.close()
             print('mouse dragged')
         else:
             f= open((fname + '.txt'), 'a')
-            f.write('[c] {} {} {}\n'.format(str(x), str(y), str(button)))
+            f.write('\n[c] {} {} {}'.format(str(x), str(y), str(button)))
             f.close()
             print('no drag')
 
