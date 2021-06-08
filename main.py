@@ -1,3 +1,5 @@
+import threading
+
 from pynput.mouse import Listener as MouseListener
 from pynput.keyboard import Listener as KeyboardListener
 #from pynput import keyboard
@@ -5,14 +7,48 @@ import PySimpleGUI as sg
 
 
 global recording, fname
-recording = False
+recording = True
 keys = []
 log = ""
 
 def recordN():
+    """""
+    with KeyboardListener(on_press=on_press) as keyboard_listener2:
 
-    return
+        keyboard_listener2.join()
+
+        print('running_ee')
+
+
+    with MouseListener(on_click=on_click, on_scroll=on_scroll) as mouse_listener:
+
+        mouse_listener.join()
+        t = threading.Thread(target=KeyboardListener)
+        m = threading.Thread(target=MouseListener)
+        m.start()
+        t.start()
+        print('threads started')
+        if not recording:
+            print('not running')
+            break
+    """""
+    keyboard_listener = KeyboardListener(on_press=on_press)
+    mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
+    keyboard_listener.start()
+    mouse_listener.start()
+
+    while recording:
+        if recording == False:
+            mouse_listener = None
+            print('recording might not stop')
+            return True
+
+    print('listener stopped')
+
 def initilizer():
+    global recording
+    recording = True
+    clwin = False
     """""
     # Setup the listener threads
     keyboard_listener = KeyboardListener(on_press=on_press)
@@ -22,72 +58,41 @@ def initilizer():
     keyboard_listener.join()
     mouse_listener.join()
     """""
-    exitCase = 0
-    til = '`'
-    til = til.center(5)
+
+    esc = '\'esc\''.center(5)
     s = 's'.center(5)
 
     layout = [
-        [sg.Text(til + ' (tilda) Start/Stop Recording')],
-        [sg.Text(s + ' Enter text')],
-        [sg.Button('Begin recording', key='-start-')]
+        [sg.Text('Drag Me Out of Your Way\nBefore You Begin Recording\nYou Wont be Able to Move Me', justification='c')],
+        [sg.Text(esc + ' Stops the Recording')],
+        [sg.Button('Begin recording', key='-start-')],
+        [sg.Button('Cancel', key='-cancel-')]
     ]
-    window = sg.Window('no title', layout, grab_anywhere=True, resizable=False, no_titlebar=True, size=(250, 200))
+    window = sg.Window('no title', layout, grab_anywhere=True, element_justification='c', resizable=False, no_titlebar=True, size=(250, 150))
 
-    # Collect all event until released
-    while True:
+    while recording:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
         elif event == '-start-':
-            print('start')
-            with KeyboardListener(on_press=on_press_start) as keyboard_listener:
-                keyboard_listener.join()
-            with KeyboardListener(on_press=on_press) as keyboard_listener:
+            clwin = recordN()
+        if clwin == True:
+            window.close()
+            main()
 
-                print('running')
 
-                with MouseListener(on_click=on_click, on_scroll=on_scroll) as mouse_listener:
-                    if not keyboard_listener.running:
-                        print('not running')
-                        break
-                    mouse_listener.join()
-
-            #keyboard_listener = KeyboardListener(on_press=on_press)
-            #mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
-            #print(mouse_listener, ' 1')
-            #keyboard_listener.start()
-            #mouse_listener.start()
-            #print(mouse_listener, ' 2')
-            #keyboard_listener.join()
-            #mouse_listener.join()
-                print('running....')
-            print('listener stopped')
-
-            """""
-            with keyboard.Listener(on_press=on_press) as kl:
-                
-                kl.start()
-                print(kl, '...stuff')
-                kl.join()
-                #if kl.char('b') == 'b':
-            """""
+        """"" join must join the keys then when 'popped' restarts the log ????
+        with keyboard.Listener(on_press=on_press) as kl:
+            
+            kl.start()
+            print(kl, '...stuff')
+            kl.join()
+            #if kl.char('b') == 'b':
+        """""
 
     print('out of while')
+
     # Start the threads and join them so the script doesn't end early
-
-    if exitCase == 5:
-        window.close()
-    print('out')
-
-def on_press_start(key):
-    try:
-        k = key.char  # single char key
-    except:
-        k = str(key)
-        if k == 'Key.esc':
-            print('Escape was pressed... EXIT')
-            return False
 
 def main():
     msg = 'Would you like to \ncreate a new Cursor Bot \nor run a saved bot'
@@ -147,20 +152,22 @@ def namer():
 
 def on_press(key):
     global recording, log
+
     print(log)
     print("Key pressed: {0}".format(key))
-
+    line_count = 0
     try:
         k = key.char #single char key
     except:
         k = str(key)
         if k == 'Key.esc':
             print('Escape was pressed... EXIT')
-            #on_click(-999999, 0, 0, 0)
+            recording = False
             return False
     if 'Key' in k:
+        s_ender()
         f = open((fname + '.txt'), 'a')
-        f.write('\n[k] {}'.format(k))
+        f.write('[k] {}\n'.format(k))
         f.close()
     else:
         #gets last line in file
@@ -179,18 +186,30 @@ def on_press(key):
             f.close()
         else:
             f = open((fname + '.txt'), 'a')
-            f.write('\n[s] {}'.format(k))
+            f.write('[s] {}'.format(k))
             f.close()
 
-def on_move(x, y):
-    print("Mouse moved to ({0}, {1})".format(x, y))
-    return x, y
+#def on_move(x, y):
+#    print("Mouse moved to ({0}, {1})".format(x, y))
+ #   return x, y
+
+def s_ender():
+    try:
+        with open((fname + '.txt'), 'r') as file:
+            for last_line in file:
+                pass
+    except:
+        last_line = ''
+        pass
+    if '[s]' in last_line:
+        f = open((fname + '.txt'), 'a')
+        f.write('\n')
+        f.close()
 
 def on_click(x, y, button, pressed):
     global x1, y1
-    drag = False
-    if x == -999999:
-        print('returning false')
+
+    if recording == False:
         return False
     if pressed:
         print('Mouse clicked at ({0}, {1}) with {2}'.format(x, y, button))
@@ -198,23 +217,27 @@ def on_click(x, y, button, pressed):
         y1 = y
     else:
         print('Mouse released at ({0}, {1}) with {2}'.format(x, y, button))
+        s_ender()
+
         if x > x1 + 10 or x < x1 - 10 or y > y1 + 10 or y < y1 - 10:
-            drag = True
             f = open((fname + '.txt'), 'a')
-            f.write('\n[cd] {} {} {} {} {}'.format(str(x1), str(y1), str(x), str(y), str(button)))
+            f.write('[cd] {} {} {} {} {}\n'.format(str(x1), str(y1), str(x), str(y), str(button)))
             f.close()
             print('mouse dragged')
         else:
             f= open((fname + '.txt'), 'a')
-            f.write('\n[c] {} {} {}'.format(str(x), str(y), str(button)))
+            f.write('[c] {} {} {}\n'.format(str(x), str(y), str(button)))
             f.close()
             print('no drag')
 
     return x, y, button
 
 def on_scroll(x, y, dx, dy):
-    print('Mouse scrolled at ({0}, {1})({2}, {3})'.format(x, y, dx, dy))
-    return x, y, dx, dy
+    if recording == False:
+        return False
+    else:
+        print('Mouse scrolled at ({0}, {1})({2}, {3})'.format(x, y, dx, dy))
+        return x, y, dx, dy
 
 
 
