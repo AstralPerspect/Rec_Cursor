@@ -33,7 +33,7 @@ def recordN():
             break
     """""
     keyboard_listener = KeyboardListener(on_press=on_press)
-    mouse_listener = MouseListener(on_click=on_click, on_scroll=on_scroll)
+    mouse_listener = MouseListener(on_click=on_click) #, on_scroll=on_scroll
     keyboard_listener.start()
     mouse_listener.start()
 
@@ -60,25 +60,31 @@ def initilizer():
     """""
 
     esc = '\'esc\''.center(5)
-    s = 's'.center(5)
 
     layout = [
-        [sg.Text('Drag Me Out of Your Way\nBefore You Begin Recording\nYou Wont be Able to Move Me', justification='c')],
+        [sg.Text('Drag Me Out of Your Way\nBefore You Begin Recording\nYou Wont be Able to Move Me\n'
+                 'Shift+Click & Scrolling Not Suppored', justification='c')],
         [sg.Text(esc + ' Stops the Recording')],
         [sg.Button('Begin recording', key='-start-')],
         [sg.Button('Cancel', key='-cancel-')]
     ]
-    window = sg.Window('no title', layout, grab_anywhere=True, element_justification='c', resizable=False, no_titlebar=True, size=(250, 150))
+    window = sg.Window('no title', layout, grab_anywhere=True, element_justification='c', resizable=False, no_titlebar=True, size=(250, 180))
 
     while recording:
         event, values = window.read()
         if event == sg.WINDOW_CLOSED:
             break
         elif event == '-start-':
+            log_file()
             clwin = recordN()
+        elif event ==  '-cancel-':
+            window.close()
+
+            break
         if clwin == True:
             window.close()
-            main()
+
+            break
 
 
         """"" join must join the keys then when 'popped' restarts the log ????
@@ -89,18 +95,17 @@ def initilizer():
             kl.join()
             #if kl.char('b') == 'b':
         """""
-
-    print('out of while')
-
+    main()
     # Start the threads and join them so the script doesn't end early
 
 def main():
     msg = 'Would you like to \ncreate a new Cursor Bot \nor run a saved bot'
     layout = [
         [sg.Text(msg, justification='c')],
-        [sg.Button('New', size=(6, 1), pad=(4, 4)), sg.Button('Saved', size=(6, 1), pad=(4, 4))]
+        [sg.Button('New', size=(6, 1), pad=(4, 4)), sg.Button('Saved', size=(6, 1), pad=(4, 4))],
+        [sg.Button('Exit', size=(6, 1), pad=(4, 4))]
     ]
-    window = sg.Window('Auto Cursor', layout, text_justification='c', element_justification='c', size=(250, 110))
+    window = sg.Window('Auto Cursor', layout, text_justification='c', element_justification='c', size=(250, 140))
 
     while True:
         event, values = window.read()
@@ -110,38 +115,34 @@ def main():
         elif event == 'New':
             window.close()
             namer()
-        elif event == "Saved":
+        elif event == "Run":
+            window.close()
+        elif event == "Exit":
             window.close()
 
             print('saved')
     window.close()
 
-def log_file(fname):
-    global log
-    #open/create file in write mode
-    with open(f'{fname}.txt', 'w') as f:
-        print(log, file=f)
-    print(f'[+] Saved {fname}.txt')
+def log_file():
+    f = open((fname + '.txt'), 'a')
+    f.write('(U) [^_^] (U)\n')
+    f.close()
 
 def namer():
-    #badchar = ('\'\";:.,/?><\|{}()`~!@#$%^&*=');
     global fname
     layout = [
         [sg.Text('Enter new script name: ', size=(17, 1), pad=(0, 0)),
-         sg.Input(size=(20, 1), pad=(0, 0), key='-name-')],
+         sg.Input(size=(20, 1), pad=(0, 0), key='-name-'), sg.Text('.txt')],
         [sg.Text('', size=(25, 1), key='-errormsg-')],
-        [sg.Button('Next')],
+        [sg.Button('Next', size=(6, 1), pad=(4, 4)), sg.Button('Back', size=(6, 1), pad=(4, 4))],
     ]
-    window = sg.Window('Name Your Script', layout, text_justification='c', element_justification='c', size=(375, 90))
-    if 8 > 4+5:
-        print('8 is larger')
-    elif 8 > 3 - 12 and 9 > 8-2:
-        print('yeet')
+    window = sg.Window('Name Your Script', layout, text_justification='c', element_justification='c', size=(375, 100))
+
     while True:
         ev, val = window.read()
         if ev == sg.WINDOW_CLOSED:
             break
-        if ev == 'Next':
+        elif ev == 'Next':
             fname = val['-name-']
             if fname.isalnum():
                 window.close()
@@ -149,6 +150,9 @@ def namer():
             else:
                 window['-name-'].update('')
                 window['-errormsg-'].update('Cannot contain special characters')
+        elif ev == 'Back':
+            window.close()
+            main()
 
 def on_press(key):
     global recording, log
@@ -165,10 +169,13 @@ def on_press(key):
             recording = False
             return False
     if 'Key' in k:
-        s_ender()
-        f = open((fname + '.txt'), 'a')
-        f.write('[k] {}\n'.format(k))
-        f.close()
+        if k == 'Key.shift':
+            pass
+        else:
+            s_ender()
+            f = open((fname + '.txt'), 'a')
+            f.write('[k] {}\n'.format(k))
+            f.close()
     else:
         #gets last line in file
         try:
@@ -232,13 +239,14 @@ def on_click(x, y, button, pressed):
 
     return x, y, button
 
+"""""
 def on_scroll(x, y, dx, dy):
     if recording == False:
         return False
     else:
         print('Mouse scrolled at ({0}, {1})({2}, {3})'.format(x, y, dx, dy))
         return x, y, dx, dy
-
+""""" #for scrolling, currently not supported
 
 
 
