@@ -40,7 +40,7 @@ def recordN():
     while recording:
         if recording == False:
             mouse_listener = None
-            print('recording might not stop')
+            print('recording might not stop: ', recording)
             return True
 
     print('listener stopped')
@@ -66,7 +66,7 @@ def initilizer():
                  'Shift+Click & Scrolling Not Suppored', justification='c')],
         [sg.Text(esc + ' Stops the Recording')],
         [sg.Button('Begin recording', key='-start-')],
-        [sg.Button('Cancel', key='-cancel-')]
+        [sg.Button('Back', key='-cancel-')]
     ]
     window = sg.Window('no title', layout, grab_anywhere=True, element_justification='c', resizable=False, no_titlebar=True, size=(250, 180))
 
@@ -77,14 +77,15 @@ def initilizer():
         elif event == '-start-':
             log_file()
             clwin = recordN()
-        elif event ==  '-cancel-':
-            window.close()
+        elif event == '-cancel-':
+            pass
 
-            break
         if clwin == True:
-            window.close()
+            print(clwin, ' close win = true')
+            pass
 
-            break
+        elif clwin == False:
+            print(clwin, ' close win = false')
 
 
         """"" join must join the keys then when 'popped' restarts the log ????
@@ -95,6 +96,7 @@ def initilizer():
             kl.join()
             #if kl.char('b') == 'b':
         """""
+    window.close()
     main()
     # Start the threads and join them so the script doesn't end early
 
